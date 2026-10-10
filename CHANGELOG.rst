@@ -9,6 +9,11 @@ Unreleased
 ----------
 Fixed
 ~~~~~
+* ``IBAN.from_bban`` now cleans its ``country_code`` and ``bban`` arguments the way the
+  ``IBAN`` and ``BBAN`` constructors clean any text they are built from. A BBAN in the
+  whitespace separated form used in the ``IBAN`` docstring, or a lower case country code,
+  previously reached the checksum computation un-normalized and raised a bare ``KeyError``
+  from ``numerify``.
 * Added the Cypriot BIC ``OROACY2LXXX`` (ORO PAY LTD) to the manual registry (#297).
 * Eight-character BICs now fall back to their equivalent ``XXX`` registry entry for
   bank codes and names when an exact entry is absent. Exact matches still take priority.

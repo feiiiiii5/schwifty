@@ -103,6 +103,13 @@ class IBAN(common.Base):
 
         .. versionadded:: 2024.01.2
         """
+        # Both components are joined into an IBAN before that IBAN is constructed, so
+        # they have to be cleaned up front, the way ``IBAN`` and ``BBAN`` clean any
+        # text they are built from. Otherwise the raw text already reaches the
+        # checksum computation and a space or a lower case character raises a bare
+        # ``KeyError`` from ``numerify``.
+        country_code = common.clean(country_code)
+        bban = common.clean(bban)
         return cls(
             country_code + _iso7064_mod97_10.compute([bban, country_code]) + bban,
             allow_invalid=allow_invalid,
