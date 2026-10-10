@@ -33,6 +33,13 @@ def _get_bban_spec(country_code: str) -> IBANSpec:
     return registry.get_iban_spec(country_code)
 
 
+def _defines_component_positions(spec: IBANSpec) -> bool:
+    # ``registry._parse_iban_spec()`` fills in an empty range for every component a
+    # national spec leaves out, so ``spec.positions`` itself is never empty: a country
+    # without positions has to be recognised by looking at the ranges it holds.
+    return any(not range_.is_empty for range_ in spec.positions.values())
+
+
 def _get_national_checksum_algorithm(country_code: str, bank: Bank | None) -> Algorithm | None:
     algo_name = bank.checksum_algo if bank is not None else "default"
     return algorithms.get(f"{country_code}:{algo_name}")
@@ -104,7 +111,7 @@ class BBAN(common.Base):
             InvalidAccountCode: If the account code does not meet the national requirements.
         """
         spec = _get_bban_spec(country_code)
-        if not spec.positions:  # pragma: no cover
+        if not _defines_component_positions(spec):
             raise exceptions.SchwiftyException(f"BBAN generation for {country_code} not supported")
 
         ranges = spec.positions
@@ -192,7 +199,7 @@ class BBAN(common.Base):
         if banks and use_registry:
             bank = random.choice(banks)
 
-        if not spec.positions:
+        if not _defines_component_positions(spec):
             return cls(country_code, rstr.xeger(spec.regex).upper())
 
         ranges = spec.positions

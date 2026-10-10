@@ -9,6 +9,13 @@ Unreleased
 ----------
 Fixed
 ~~~~~
+* ``BBAN.random()`` and ``IBAN.random()`` now generate a real value for the seven countries
+  whose national spec carries no component positions (AO, GW, HN, IR, KM, MG, MZ). The guard
+  that was meant to recognise them could never fire, because the registry fills an empty range
+  for every component, so those calls produced one constant all-zero BBAN — and for HN, whose
+  BBAN begins with four letters, ``IBAN.random()`` raised ``InvalidStructure`` on every call.
+  ``BBAN.from_components()`` for those countries now says generation is unsupported instead of
+  silently discarding the bank and account code it was given.
 * Added the Cypriot BIC ``OROACY2LXXX`` (ORO PAY LTD) to the manual registry (#297).
 * Eight-character BICs now fall back to their equivalent ``XXX`` registry entry for
   bank codes and names when an exact entry is absent. Exact matches still take priority.

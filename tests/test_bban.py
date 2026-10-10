@@ -9,6 +9,7 @@ from schwifty.bban import BBAN
 from schwifty.exceptions import GenerateRandomOverflowError
 from schwifty.exceptions import InvalidAccountCode
 from schwifty.exceptions import InvalidBBANChecksum
+from schwifty.exceptions import SchwiftyException
 
 
 def test_validate_national_checksum() -> None:
@@ -134,3 +135,23 @@ def test_deepcopy() -> None:
     assert bban_copy == bban
     assert bban_copy.country_code == bban.country_code
     assert id(bban_copy) != id(bban)
+
+
+@pytest.mark.parametrize("country_code", ["AO", "GW", "HN", "IR", "KM", "MG", "MZ"])
+def test_random_without_component_positions(country_code: str) -> None:
+    # These specs carry no component positions, so a BBAN is built from the national
+    # pattern alone. Falling into the component loop instead yields one constant string
+    # of zeros, which also makes IBAN.random() raise for the alphanumeric countries.
+    spec = registry.get_iban_spec(country_code)
+    bbans = {BBAN.random(country_code) for _ in range(20)}
+    assert len(bbans) > 1
+    for bban in bbans:
+        assert spec.regex.fullmatch(str(bban))
+    assert IBAN.random(country_code=country_code).is_valid
+
+
+def test_from_components_without_component_positions() -> None:
+    # Without positions the bank and account code cannot be placed anywhere, so saying
+    # so beats returning an all-zero BBAN that silently drops them.
+    with pytest.raises(SchwiftyException, match="BBAN generation for KM not supported"):
+        BBAN.from_components("KM", bank_code="01", account_code="0000000000000000")
