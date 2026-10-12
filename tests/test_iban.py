@@ -333,11 +333,7 @@ def test_generate_iban(components: tuple[str, ...], compact: str) -> None:
     ],
 )
 def test_from_bban_normalizes_text_input(country_code: str, bban: str, compact: str) -> None:
-    # ``from_bban()`` joined its arguments into the IBAN before constructing it, so the
-    # text was never cleaned the way the ``IBAN`` and ``BBAN`` constructors clean it. A
-    # BBAN in the whitespace separated form of the ``IBAN`` docstring example therefore
-    # reached the checksum computation un-normalized and raised a bare ``KeyError`` from
-    # ``numerify``.
+    # Match the input normalization contract of the text constructors.
     assert IBAN.from_bban(country_code, bban).compact == compact
 
 
